@@ -1,0 +1,7 @@
+#fd
+FaceDetection/bin/Debug/input/*
+FaceDetection/bin/Debug/output/*
+
+#vs
+FaceDetection/bin/Debug/FaceDetection.exe.config
+FaceDetection/obj/
