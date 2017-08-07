@@ -1,4 +1,7 @@
-﻿using System;
+﻿//using: emgucv-windesktop 3.1.0.2504 (other versions might also work)
+//https://sourceforge.net/projects/emgucv/?source=typ_redirect
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -8,10 +11,27 @@ namespace FaceDetection
 {
     public static class DetectFace
     {
-        public static void Detect(IInputArray image,
-           String facePath, String eyePairPath, String leftEyeFileName, String rightEyeFileName, String noseFileName, String mouthFileName,
-           List<Rectangle> faces, List<Rectangle> eyePairs, List<Rectangle> leftEyes, List<Rectangle> rightEyes, List<Rectangle> noses, List<Rectangle> mouths,
-           out long detectionTime)
+        /// <summary>
+        /// Gets an image, file paths to haar-cascades, detects face-related elements in an image and outputs their
+        /// areas (rectangles) and time of detection.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="facePath"></param>
+        /// <param name="eyePairPath"></param>
+        /// <param name="leftEyeFileName"></param>
+        /// <param name="rightEyeFileName"></param>
+        /// <param name="noseFileName"></param>
+        /// <param name="mouthFileName"></param>
+        /// <param name="faces"></param>
+        /// <param name="eyePairs"></param>
+        /// <param name="leftEyes"></param>
+        /// <param name="rightEyes"></param>
+        /// <param name="noses"></param>
+        /// <param name="mouths"></param>
+        /// <param name="detectionTime"></param>
+        public static void Detect(IInputArray image, String facePath, String eyePairPath, String leftEyeFileName, String rightEyeFileName, 
+            String noseFileName, String mouthFileName, List<Rectangle> faces, List<Rectangle> eyePairs, List<Rectangle> leftEyes,
+           List<Rectangle> rightEyes, List<Rectangle> noses, List<Rectangle> mouths, out long detectionTime)
         {
             Stopwatch watch = Stopwatch.StartNew();
 
@@ -25,14 +45,14 @@ namespace FaceDetection
             {
                 CvInvoke.CvtColor(image, ugray, Emgu.CV.CvEnum.ColorConversion.Bgr2Gray);
                 CvInvoke.EqualizeHist(ugray, ugray);
-                Rectangle[] facesFound = face.DetectMultiScale(ugray, 1.1, 15, new Size(60, 60));
+                Rectangle[] facesFound = face.DetectMultiScale(ugray, 1.1, 15, new Size(50, 50));
                 faces.AddRange(facesFound);
 
                 foreach (Rectangle f in facesFound)
                 {
                     using (UMat faceRegion = new UMat(ugray, f))
                     {
-                        var sizes = new PartsSizes(f);
+                        PartsSizes sizes = new PartsSizes(f);
 
                         Rectangle[] eyePairsFound = eyePair.DetectMultiScale(faceRegion, 1.03, 0, sizes.eyePairMin, sizes.eyePairMax);
                         Rectangle[] leftEyesFound = leftEye.DetectMultiScale(faceRegion, 1.03, 0, sizes.eyeMin, sizes.eyeMax);
@@ -52,7 +72,20 @@ namespace FaceDetection
             detectionTime = watch.ElapsedMilliseconds;
         }
 
-        private static void FindValidRectInFace(Rectangle face, Rectangle[] inputRects, List<Rectangle> outputRects, float minX, float maxX, float minY, float maxY)
+        /// <summary>
+        /// Gets a single face, array of detected areas and area limitations as floats and outputs rectangle(s) that 
+        /// fit the most to what we are looking for. For example nose should be +/- in the center of the face and
+        /// mouth should be under nose etc.
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="inputRects"></param>
+        /// <param name="outputRects"></param>
+        /// <param name="minX"></param>
+        /// <param name="maxX"></param>
+        /// <param name="minY"></param>
+        /// <param name="maxY"></param>
+        private static void FindValidRectInFace(Rectangle face, Rectangle[] inputRects, List<Rectangle> outputRects,
+            float minX, float maxX, float minY, float maxY)
         {
             foreach (Rectangle rect in inputRects)
             {
@@ -67,6 +100,10 @@ namespace FaceDetection
             }
         }
 
+        /// <summary>
+        /// Calculates proper limitations of coords of areas. For example nose detection area 
+        /// shouldn't be wider than 50% of the face etc.
+        /// </summary>
         public struct PartsSizes
         {
             //min/max sizes of face parts defined by size of face [%]

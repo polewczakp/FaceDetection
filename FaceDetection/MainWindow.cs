@@ -1,7 +1,4 @@
-﻿//using: emgucv-windesktop 3.1.0.2504 
-//https://sourceforge.net/projects/emgucv/?source=typ_redirect
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
@@ -26,6 +23,7 @@ namespace FaceDetection
             InitializeComponent();
             if (debugMode)
                 AllocConsole();
+            cbCensorType.Items.AddRange(GetAreaNameRange());
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -44,6 +42,11 @@ namespace FaceDetection
             SetForegroundWindow(GetConsoleWindow());
         }
 
+        /// <summary>
+        /// Method processing the images from chosen files. Makes sure the user selected .jpg files and starts processing
+        /// each of the images. Original images are seen on the left of the window and processed images are on the right.
+        /// Saves the processed images to /output folder.
+        /// </summary>
         private void ProcessTheImages()
         {
             if (debugMode)
@@ -51,8 +54,18 @@ namespace FaceDetection
 
             if (fileList == null)
             {
-                fileList = Directory.GetFiles("input");
-                Console.WriteLine("No files selected - parsing default input\\ folder.");
+                try
+                {
+                    Console.WriteLine("No files selected - parsing default input\\ folder.");
+                    fileList = Directory.GetFiles("input");
+                }
+                catch
+                {
+                    Console.WriteLine("input\\ folder not found.");
+                    MessageBox.Show(new Form { TopMost = true },
+                        "Please choose images first.", "Warning");
+                    return;
+                }
             }
             Console.WriteLine("Processing selected images...");
             ImageProcessor.ResetCounters();
@@ -64,12 +77,20 @@ namespace FaceDetection
                     images.Add(new ImageProcessor(f));
                     currentID = images.Count - 1;
                     ShowImage(currentID);
-                    images[currentID].image.Save($"{outputFolderPath}detected_{Path.GetFileName(f)}");
+                    try
+                    {
+                        images[currentID].image.Save($"{outputFolderPath}detected_{Path.GetFileName(f)}");
+                    }
+                    catch (ExternalException)
+                    {
+                        Console.WriteLine("Folder output\\ not found. Created new folder.");
+                        Directory.CreateDirectory(outputFolderPath);
+                        images[currentID].image.Save($"{outputFolderPath}detected_{Path.GetFileName(f)}");
+                    }
                 }
             }
             ShowImage(0);
-            Console.WriteLine($"\nDetection summary: \nfaces: {ImageProcessor.faceCount} \nleft eyes: {ImageProcessor.leftEyeCount} " +
-                $"\nright eyes: {ImageProcessor.rightEyeCount} \nnoses: {ImageProcessor.noseCount} \nmouths: {ImageProcessor.mouthCount}\n");
+            ImageProcessor.PrintSummary();
             Console.WriteLine("Waiting for decision...");
         }
 
@@ -85,6 +106,10 @@ namespace FaceDetection
             ShowImage(currentID);
         }
 
+        /// <summary>
+        /// Takes an ID of an image and shows the image in window.
+        /// </summary>
+        /// <param name="ID"></param>
         private void ShowImage(int ID)
         {
             HandleButtonEnabling(ref ID);
@@ -93,10 +118,15 @@ namespace FaceDetection
                 lblInfo.Text = "No. " + (ID + 1) + " out of " + images.Count + ". File: " + images[ID].FilePath + ".";
             }
             catch { }
+
             leftPicBox.Image = Image.FromFile(images[ID].FilePath);
             rightPicBox.Image = images[ID].image.Bitmap;
         }
 
+        /// <summary>
+        /// Handles "arrow" buttons. Eg. if the last image is shown, you can't go further, so the ">" button is disabled etc.
+        /// </summary>
+        /// <param name="ID"></param>
         private void HandleButtonEnabling(ref int ID)
         {
             currentID = ID;
@@ -127,6 +157,11 @@ namespace FaceDetection
             }
         }
 
+        /// <summary>
+        /// Handling censor button functionality which starts censoring each image.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnCensor_Click(object sender, EventArgs e)
         {
             btnCensor.Enabled = false;
@@ -145,21 +180,30 @@ namespace FaceDetection
             btnCensor.Enabled = true;
         }
 
-        public void ShowCensoredImage(Bitmap censoredImage)
-        {
-            rightPicBox.Image = censoredImage; //doesn't work yet
-        }
-
+        /// <summary>
+        /// Resetting image view when resizing window. Useful if user messes up too much.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SplitContainer1_SizeChanged(object sender, EventArgs e)
         {
-            if (splitContainer1.Size.Width > 1)//condition needed because it throws an exception when width = 0 (minimized)
+            if (splitContainer1.Size.Width > 1)//condition needed because it throws an exception when width = 0 (window minimized)
             {
                 splitContainer1.SplitterDistance = (int)(0.5 * splitContainer1.Size.Width);
                 leftPicBox.SetZoomScale(1.0, new Point(0, 0));
                 rightPicBox.SetZoomScale(1.0, new Point(0, 0));
+                leftPicBox.VerticalScrollBar.Value = 0;
+                rightPicBox.VerticalScrollBar.Value = 0;
+                leftPicBox.HorizontalScrollBar.Value = 0;
+                rightPicBox.HorizontalScrollBar.Value = 0;
             }
         }
 
+        /// <summary>
+        /// Handling XML button.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnXML_Click(object sender, EventArgs e)
         {
             if (debugMode)
@@ -167,17 +211,36 @@ namespace FaceDetection
             XmlProcessor.Begin("output\\images.xml");
             foreach (var i in images)
             {
-                XmlProcessor.AddImageInfo(i);
+                XmlProcessor.AddImageInfo(i, ImageProcessor.CensorType);
             }
             if (XmlProcessor.Finish())
                 lblInfo.Text += " Xml written.";
         }
 
+        /// <summary>
+        /// Shows output folder from File Explorer. If the folder doesn't exist, it's created.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnBrowseOutput_Click(object sender, EventArgs e)
         {
-            Process.Start(outputFolderPath);
+            try
+            {
+                Process.Start(outputFolderPath);
+            }
+            catch (ExternalException)
+            {
+                Console.WriteLine("Folder output\\ not found. Created new folder.");
+                Directory.CreateDirectory(outputFolderPath);
+                Process.Start(outputFolderPath);
+            }
         }
 
+        /// <summary>
+        /// Starts processing chosen images.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnProcess_Click(object sender, EventArgs e)
         {
             lblInfo.Text = "Processing...";
@@ -189,6 +252,11 @@ namespace FaceDetection
             btnXML.Enabled = true;
         }
 
+        /// <summary>
+        /// Opens file dialog for chosing images to process.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnLoad_Click(object sender, EventArgs e)
         {
             lblInfo.Text = "Choose images you want to process...";
@@ -219,6 +287,51 @@ namespace FaceDetection
                 {
                     MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
                 }
+            }
+        }
+
+        private void CBCensorType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ImageProcessor.CensorType = cbCensorType.SelectedIndex;
+        }
+
+        /// <summary>
+        /// Describes a list of censor area types for ComboBox.
+        /// </summary>
+        /// <returns></returns>
+        public object[] GetAreaNameRange()
+        {
+            return new object[]
+            {
+                new AreaCB(ImageProcessor.CensorAreas.Face,"Whole face"),
+                new AreaCB(ImageProcessor.CensorAreas.Stripe,"Stripe"),
+                new AreaCB(ImageProcessor.CensorAreas.Separate,"Separate eyes")
+            };
+        }
+
+
+        /// <summary>
+        /// Handling of the ComboBox items.
+        /// </summary>
+        public struct AreaCB
+        {
+            public ImageProcessor.CensorAreas _type;
+            public string _caption;
+
+            public AreaCB(ImageProcessor.CensorAreas type, string caption)
+            {
+                _type = type;
+                _caption = caption;
+            }
+
+            public ImageProcessor.CensorAreas GetNumber()
+            {
+                return _type;
+            }
+
+            public override string ToString()
+            {
+                return _caption;
             }
         }
     }

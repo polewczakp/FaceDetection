@@ -39,6 +39,7 @@
             this.btnLoad = new System.Windows.Forms.Button();
             this.btnProcess = new System.Windows.Forms.Button();
             this.btnPrevImage = new System.Windows.Forms.Button();
+            this.cbCensorType = new System.Windows.Forms.ComboBox();
             this.btnXML = new System.Windows.Forms.Button();
             this.btnBrowseOutput = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.leftPicBox)).BeginInit();
@@ -98,7 +99,7 @@
             // btnCensor
             // 
             this.btnCensor.Enabled = false;
-            this.btnCensor.Location = new System.Drawing.Point(283, 3);
+            this.btnCensor.Location = new System.Drawing.Point(410, 3);
             this.btnCensor.Name = "btnCensor";
             this.btnCensor.Size = new System.Drawing.Size(75, 23);
             this.btnCensor.TabIndex = 3;
@@ -147,6 +148,7 @@
             this.flowLayoutPanelButtons.Controls.Add(this.btnProcess);
             this.flowLayoutPanelButtons.Controls.Add(this.btnPrevImage);
             this.flowLayoutPanelButtons.Controls.Add(this.btnNextImage);
+            this.flowLayoutPanelButtons.Controls.Add(this.cbCensorType);
             this.flowLayoutPanelButtons.Controls.Add(this.btnCensor);
             this.flowLayoutPanelButtons.Controls.Add(this.btnXML);
             this.flowLayoutPanelButtons.Controls.Add(this.btnBrowseOutput);
@@ -187,10 +189,20 @@
             this.btnPrevImage.UseVisualStyleBackColor = true;
             this.btnPrevImage.Click += new System.EventHandler(this.BtnPrevImage_Click);
             // 
+            // cbCensorType
+            // 
+            this.cbCensorType.FormattingEnabled = true;
+            this.cbCensorType.Location = new System.Drawing.Point(283, 3);
+            this.cbCensorType.Name = "cbCensorType";
+            this.cbCensorType.Size = new System.Drawing.Size(121, 21);
+            this.cbCensorType.TabIndex = 9;
+            this.cbCensorType.Text = "Whole face";
+            this.cbCensorType.SelectedIndexChanged += new System.EventHandler(this.CBCensorType_SelectedIndexChanged);
+            // 
             // btnXML
             // 
             this.btnXML.Enabled = false;
-            this.btnXML.Location = new System.Drawing.Point(364, 3);
+            this.btnXML.Location = new System.Drawing.Point(491, 3);
             this.btnXML.Name = "btnXML";
             this.btnXML.Size = new System.Drawing.Size(99, 23);
             this.btnXML.TabIndex = 6;
@@ -200,7 +212,7 @@
             // 
             // btnBrowseOutput
             // 
-            this.btnBrowseOutput.Location = new System.Drawing.Point(469, 3);
+            this.btnBrowseOutput.Location = new System.Drawing.Point(596, 3);
             this.btnBrowseOutput.Name = "btnBrowseOutput";
             this.btnBrowseOutput.Size = new System.Drawing.Size(129, 23);
             this.btnBrowseOutput.TabIndex = 7;
@@ -246,6 +258,7 @@
         private System.Windows.Forms.Button btnXML;
         private System.Windows.Forms.Button btnBrowseOutput;
         private System.Windows.Forms.Button btnProcess;
+        private System.Windows.Forms.ComboBox cbCensorType;
     }
 }
 

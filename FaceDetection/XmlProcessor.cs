@@ -5,6 +5,9 @@ using System.Xml;
 
 namespace FaceDetection
 {
+    /// <summary>
+    /// Takes info about each image and stores to an .xml file.
+    /// </summary>
     public static class XmlProcessor
     {
         private static string XmlPath { get; set; }
@@ -25,7 +28,7 @@ namespace FaceDetection
             xml.WriteStartElement("faceDetection");
         }
 
-        public static void AddImageInfo(ImageProcessor image)
+        public static void AddImageInfo(ImageProcessor image, int censorType)
         {
 
             xml.WriteStartElement("image");
@@ -40,15 +43,15 @@ namespace FaceDetection
             xml.WriteEndElement();
 
             xml.WriteStartElement("censoredObject");
-            switch (image.censorType)
+            switch (censorType)
             {
-                case (int)ImageProcessor.CensorArea.Face:
+                case (int)ImageProcessor.CensorAreas.Face:
                     xml.WriteValue("face");
                     break;
-                case (int)ImageProcessor.CensorArea.Stripe:
+                case (int)ImageProcessor.CensorAreas.Stripe:
                     xml.WriteValue("eyes (stripe)");
                     break;
-                case (int)ImageProcessor.CensorArea.Separate:
+                case (int)ImageProcessor.CensorAreas.Separate:
                     xml.WriteValue("eyes (separate)");
                     break;
                 default:

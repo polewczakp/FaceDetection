@@ -15,6 +15,10 @@ Face detection realised with EmguCV. EmguCV is a cross platform .Net wrapper to 
 
 3. Logging the areas to an .xml file for further use.
 
+
+### Notes
+By default, the faces in an image should be at least 50x50 px in order to be detected.
+
 Please note that used Haar Cascades and the OpenCV algorythms are far from perfect. The initial results might not be satisfying, thus the user needs to tweak the configuration such as scale factor, minimum of neighbors, minimal and maximal size of objects etc. User also might use his own Haar Cascades. Those used in the project belong to Intel Corporation.
 
 
